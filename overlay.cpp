@@ -191,10 +191,10 @@ void Overlay::draw(const DrawContext& dc)
 
         float vertices[] = {
             // Pos      // Tex
-            0.0f, 0.0f, 0.0f, 1.0f,
-            0.0f, 1.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 0.0f
+            0.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 1.0f,
+            1.0f, 0.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f
         };
         myVA(dc) = dc.gpuContext->createVertexArray();
         myVA(dc)->addBuffer(0, GpuBuffer::VertexData, 16 * sizeof(float), vertices);
