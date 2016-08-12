@@ -1,4 +1,5 @@
 #include <omega.h>
+#include <omega/glheaders.h>
 #include <omega/PythonInterpreterWrapper.h>
 
 using namespace omega;
@@ -37,12 +38,15 @@ private:
 class OverlayEffect : public ReferenceType
 {
 public:
+    enum BlendMode { BlendDisabled, BlendModulate, BlendAdditive };
+public:
     OverlayEffect();
     ~OverlayEffect();
     void setShaders(const String& vertexShader, const String& fragmentShader);
     bool prepare(const DrawContext& context);
     GpuProgram* getProgram(const DrawContext& dc) { return myProgram(dc); }
     Uniform* getTransform(const DrawContext& dc) { return myTransform(dc); }
+    void setBlendMode(BlendMode mode) { myBlendMode = mode; }
 
 private:
 private:
@@ -53,6 +57,7 @@ private:
     GpuRef<Uniform> myProjection;
     GpuRef<Uniform> myTransform;
     bool myDirty;
+    BlendMode myBlendMode;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -113,7 +118,8 @@ public:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-OverlayEffect::OverlayEffect()
+OverlayEffect::OverlayEffect():
+    myBlendMode(BlendModulate)
 {
     OverlayModule::instance->effects.push_back(this);
 }
@@ -162,6 +168,21 @@ bool OverlayEffect::prepare(const DrawContext& dc)
     }
 
     myProjection(dc)->set(dc.ortho);
+
+    switch(myBlendMode)
+    {
+    case BlendDisabled:
+        glDisable(GL_BLEND);
+        break;
+    case BlendModulate:
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        break;
+    case BlendAdditive:
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        break;
+    }
 
     return true;
 }
@@ -276,6 +297,12 @@ void OverlayModule::initializeRenderer(Renderer* r)
 OverlayModule* OverlayModule::instance = NULL;
 BOOST_PYTHON_MODULE(overlay)
 {
+    PYAPI_ENUM(OverlayEffect::BlendMode, BlendMode)
+        PYAPI_ENUM_VALUE(OverlayEffect, BlendDisabled)
+        PYAPI_ENUM_VALUE(OverlayEffect, BlendModulate)
+        PYAPI_ENUM_VALUE(OverlayEffect, BlendAdditive)
+        ;
+
     PYAPI_REF_BASE_CLASS_WITH_CTOR(Overlay)
         PYAPI_METHOD(Overlay, setPosition)
         PYAPI_METHOD(Overlay, setSize)
@@ -286,6 +313,7 @@ BOOST_PYTHON_MODULE(overlay)
 
     PYAPI_REF_BASE_CLASS_WITH_CTOR(OverlayEffect)
         PYAPI_METHOD(OverlayEffect, setShaders)
+        PYAPI_METHOD(OverlayEffect, setBlendMode)
         ;
 
     ModuleServices::addModule(new OverlayModule());
