@@ -4,36 +4,6 @@
 
 using namespace omega;
 
-///////////////////////////////////////////////////////////////////////////
-//! A template for accessing gpu resources on multiple contexts.
-template<typename T> class GpuRef
-{
-public:
-    GpuRef()
-    {
-        memset(myStamps, 0, sizeof(myStamps));
-    }
-    Ref<T>& operator()(const GpuContext& context)
-    {
-        return myObjects[context.getId()];
-    }
-    Ref<T>& operator()(const DrawContext& context)
-    {
-        return myObjects[context.gpuContext->getId()];
-    }
-    double& stamp(const GpuContext& context)
-    {
-        return myStamps[context.getId()];
-    }
-    double& stamp(const DrawContext& context)
-    {
-        return myStamps[context.gpuContext->getId()];
-    }
-private:
-    Ref<T> myObjects[GpuContext::MaxContexts];
-    double myStamps[GpuContext::MaxContexts];
-};
-
 ///////////////////////////////////////////////////////////////////////////////
 class OverlayEffect : public ReferenceType
 {
