@@ -16,8 +16,9 @@ public:
     bool prepare(const DrawContext& context);
     GpuProgram* getProgram(const DrawContext& dc) { return myProgram(dc); }
     Uniform* getTransform(const DrawContext& dc) { return myTransform(dc); }
+    Uniform* getAlpha(const DrawContext& dc) { return myAlpha(dc); }
     void setBlendMode(BlendMode mode) { myBlendMode = mode; }
-
+    
 private:
 private:
     String myVertexShaderFilename;
@@ -26,6 +27,7 @@ private:
     GpuRef<GpuProgram> myProgram;
     GpuRef<Uniform> myProjection;
     GpuRef<Uniform> myTransform;
+    GpuRef<Uniform> myAlpha;
     bool myDirty;
     BlendMode myBlendMode;
 };
@@ -42,7 +44,7 @@ public:
     void setPosition(float x, float y) { myPosition = Vector2f(x, y); }
     void setSize(float w, float h) { mySize = Vector2f(w, h); }
     void setAutosize(bool enabled) { myAutosize = enabled; }
-
+    void setAlpha(float a) { myAlpha = a; }
     void draw(const DrawContext& dc);
 private:
 
@@ -53,6 +55,7 @@ private:
     GpuRef<Texture> myTextureObject;
     Vector2f myPosition;
     Vector2f mySize;
+    float myAlpha;
     bool myAutosize;
 };
 
@@ -118,6 +121,7 @@ bool OverlayEffect::prepare(const DrawContext& dc)
         myProgram(dc) = p;
         myTransform(dc) = p->addUniform("transform");
         myProjection(dc) = p->addUniform("projection");
+        myAlpha(dc) = p->addUniform("alpha");
     }
 
     if(myDirty)
@@ -164,6 +168,7 @@ Overlay::Overlay()
     myFx = OverlayModule::instance->defaultEffect;
     mySize = Vector2f(1, 1);
     myPosition = Vector2f(0, 0);
+    myAlpha = 1.0f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -220,7 +225,7 @@ void Overlay::draw(const DrawContext& dc)
         Vector3f(mySize[0], mySize[1], 1));
 
     myFx->getTransform(dc)->set(xform);
-
+    myFx->getAlpha(dc)->set(myAlpha);
     myDrawCall(dc)->items = 4;
     myDrawCall(dc)->run();
 }
@@ -279,6 +284,7 @@ BOOST_PYTHON_MODULE(overlay)
         PYAPI_METHOD(Overlay, setTexture)
         PYAPI_METHOD(Overlay, setAutosize)
         PYAPI_METHOD(Overlay, setEffect)
+        PYAPI_METHOD(Overlay, setAlpha)
         ;
 
     PYAPI_REF_BASE_CLASS_WITH_CTOR(OverlayEffect)
